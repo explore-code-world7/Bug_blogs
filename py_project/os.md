@@ -48,19 +48,20 @@ Python → C → kernel 调用
 rm 直接由 shell 内建实现，一条命令发给 kernel → 极快。
 
 ## 方法 1：用 subprocess 调用 rm（最推荐，最快）
+```python
 import subprocess
 import glob
 
 files = glob.glob("/path/to/traj/*.pkl")
 subprocess.run(["rm", "-f"] + files)
-
+```
 
 这样 Python 不执行 N 次系统调用，而是 只调用一次 rm。
 
 
 ### 方法 2：先将文件移动到一个临时目录，再整体删除（超快）
 删除目录比删除目录里的很多文件快得多：
-
+```python
 import shutil
 import os
 import uuid
@@ -73,7 +74,7 @@ os.rename(src_dir, tmp_dir)
 
 # 2. 再后台删除 tmp_dir
 shutil.rmtree(tmp_dir)
-
+```
 
 因为 rename 是 O(1)，不会受目录中文件个数影响。
 再删除整个目录，EXT4 可以批量处理，速度比逐文件快得多。
