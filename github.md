@@ -305,29 +305,34 @@ git commit
 
 * Geek: https://www.geeksforgeeks.org/how-to-use-the-git-submodule-init-and-update-command/
 
+
+## 根据.gitmodules更新.git/config文件
+
+```bash
+git submodule init
+```
+
 * clone远程仓库到本地文件夹
 
 ```bash
 git submodule add https://github.com/iphysresearch/GWToolkit.git GWToolkit
 ```
 
-* 老版拉取
+* 更新子仓库
 
 ```bash
 git submodule update --init --recursive
 ```
 
-* 查看
+## brief
 
-```bash
-git status
-```
+| 命令                                        | 作用             |
+| ----------------------------------------- | -------------- |
+| `git submodule init`                      | 配置 submodule   |
+| `git submodule update`                    | checkout 子仓库代码 |
+| `git submodule update --init`             | 两步合一           |
+| `git submodule update --init --recursive` | 多层 submodule   |
 
-* sub module也需要initialization
-
-```bash
-git submodule init
-```
 
 ## 回退remote branch
 
@@ -422,7 +427,7 @@ git submodule update --remote --merge
 * 更新子模块到最新 upstream	git submodule update --remote
 
 ## git push自动推送子repo
-### m1:
+### handfully subrepo push
 ```bash
 cd submodule
 git commit
@@ -432,7 +437,7 @@ git add submodule
 git commit
 git push
 ```
-### automatically
+### automatically subrepo push
 * update remote branch
 ```bash
 git config -f .gitmodules submodule.rsl_rl.branch main
@@ -441,6 +446,12 @@ git submodule update --remote
 * push each submodule
 ```bash
 git submodule foreach 'git add .; git commit --amend --no-edit; git push --force'
+```
+* 保持
+
+### push main repo
+```bash
+git push --recurse-submodules=check
 ```
 
 # points
