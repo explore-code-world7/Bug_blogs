@@ -1,0 +1,364 @@
+这些缩写都是 **OpenGL** 中常见的对象名，主要用于组织 GPU 里的数据或渲染状态。下面按功能解释它们分别是什么、作用是什么。
+
+---
+
+# 1. VAO — Vertex Array Object
+
+![Image](https://learnopengl.com/img/getting-started/vertex_array_objects_ebo.png)
+
+![Image](https://i.sstatic.net/nk4L0.png)
+
+![Image](https://wikis.khronos.org/opengl/images/RenderingPipeline.png)
+
+![Image](https://learnopengl.com/img/getting-started/pipeline.png)
+
+**VAO = Vertex Array Object**
+
+作用：
+保存 **顶点输入状态配置**。
+
+具体保存的内容包括：
+
+* 顶点属性布局（position / normal / uv 等）
+* 哪个 **VBO** 提供数据
+* **EBO** 的绑定关系
+* attribute index 映射
+
+典型代码：
+
+```cpp
+GLuint vao;
+glGenVertexArrays(1, &vao);
+glBindVertexArray(vao);
+```
+
+然后设置 attribute：
+
+```cpp
+glVertexAttribPointer(...)
+glEnableVertexAttribArray(...)
+```
+
+之后只需要：
+
+```cpp
+glBindVertexArray(vao)
+```
+
+就能恢复所有 vertex 输入状态。
+
+可以理解为：
+
+```
+VAO = vertex input configuration
+```
+
+---
+
+# 2. EBO — Element Buffer Object
+
+**EBO = Element Buffer Object**
+
+也叫：
+
+```
+Index Buffer
+```
+
+作用：
+
+```
+存储 triangle index
+```
+
+例如：
+
+```
+vertices:
+0 1 2 3
+```
+
+index：
+
+```
+0 1 2
+2 3 0
+```
+
+这样可以 **复用顶点**。
+
+创建：
+
+```cpp
+GLuint ebo;
+glGenBuffers(1, &ebo);
+
+glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, data, GL_STATIC_DRAW);
+```
+
+绘制：
+
+```cpp
+glDrawElements(...)
+```
+
+EBO 的特点：
+
+```
+绑定在 VAO 上
+```
+
+所以：
+
+```
+VAO 记录了 EBO
+```
+
+---
+
+# 3. FBO — Framebuffer Object
+
+![Image](https://www.songho.ca/opengl/files/gl_fbo01.png)
+
+![Image](https://www.mbsoftworks.sk/tutorials/opengl4/028-framebuffer-3D-color-picking/framebuffer.png)
+
+![Image](https://i.sstatic.net/fm1nK.png)
+
+![Image](https://www.researchgate.net/publication/269268847/figure/fig3/AS%3A669280764977163%401536580377338/Off-screen-OpenGL-rendering-context-for-extracting-the-projection-slice-and-reading-it.png)
+
+**FBO = Framebuffer Object**
+
+作用：
+
+```
+自定义渲染目标
+```
+
+默认渲染到：
+
+```
+screen framebuffer
+```
+
+但很多任务需要：
+
+```
+render to texture
+```
+
+例如：
+
+* 深度图
+* shadow map
+* G-buffer
+* differentiable rendering
+* pose rendering
+
+FBO 可以 attach：
+
+| attachment | 用途             |
+| ---------- | -------------- |
+| color      | RGB 图像         |
+| depth      | 深度             |
+| stencil    | stencil buffer |
+
+例如：
+
+```cpp
+glFramebufferTexture2D(
+    GL_FRAMEBUFFER,
+    GL_COLOR_ATTACHMENT0,
+    GL_TEXTURE_2D,
+    texture,
+    0
+)
+```
+
+你的代码中：
+
+```python
+self._fbo = gu.Framebuffer(
+{
+GL_COLOR_ATTACHMENT0: Texture(...),
+GL_COLOR_ATTACHMENT1: Texture(...),
+GL_DEPTH_ATTACHMENT: Renderbuffer(...)
+})
+```
+
+就是：
+
+```
+color buffer
+depth buffer
+```
+
+渲染结束再：
+
+```
+glReadPixels
+```
+
+读出来。
+
+---
+
+# 4. IBO — Indirect Buffer Object
+
+注意：
+
+```
+IBO 不是 OpenGL 官方名字
+```
+
+OpenGL 官方叫：
+
+```
+GL_DRAW_INDIRECT_BUFFER
+```
+
+但很多项目叫它：
+
+```
+IBO = Indirect Buffer Object
+```
+
+作用：
+
+```
+存储 draw command
+```
+
+例如：
+
+```
+DrawElementsIndirectCommand
+```
+
+结构：
+
+```
+count
+instanceCount
+firstIndex
+baseVertex
+baseInstance
+```
+
+存储在 GPU buffer：
+
+```
+cmd0
+cmd1
+cmd2
+...
+```
+
+然后：
+
+```
+glDrawElementsIndirect(offset)
+```
+
+GPU 从 buffer 读取 draw 参数。
+
+优点：
+
+```
+减少 CPU draw call
+```
+
+在你的 renderer 中：
+
+```
+ibo = gu.IBO(...)
+```
+
+就是创建：
+
+```
+draw command buffer
+```
+
+---
+
+# 五、它们在渲染管线中的位置
+
+整个关系：
+
+```
+           VAO
+            │
+      ┌─────┴─────┐
+      │           │
+     VBO         EBO
+  (vertices)   (indices)
+
+             ↓
+
+       glDrawElements
+
+             ↓
+
+            FBO
+       (render target)
+```
+
+如果用 indirect：
+
+```
+VAO
+ │
+VBO/EBO
+
+IBO (draw command)
+
+glDrawElementsIndirect()
+
+↓
+
+FBO
+```
+
+---
+
+# 六、简单总结
+
+| 缩写  | 全称                     | 作用                  |
+| --- | ---------------------- | ------------------- |
+| VAO | Vertex Array Object    | 顶点输入配置              |
+| EBO | Element Buffer Object  | index buffer        |
+| FBO | Framebuffer Object     | 渲染目标                |
+| IBO | Indirect Buffer Object | draw command buffer |
+
+---
+
+💡 在你现在这个 **Self6D++ renderer** 里，结构其实是：
+
+```
+VAO
+ ├── VBO (所有模型顶点)
+ └── EBO (所有模型 index)
+
+IBO
+ └── 所有模型的 draw command
+
+FBO
+ └── 渲染输出 (color + depth)
+```
+
+然后每次：
+
+```
+glDrawElementsIndirect(obj_id * 20)
+```
+
+就能渲染对应 CAD 模型。
+
+---
+
+如果你愿意，我可以再帮你解释一个 **OpenGL renderer 非常关键但很多 CV 代码没讲清楚的问题**：
+
+> 为什么 **VAO 必须绑定 EBO，而 VBO 不必须绑定**。
+
+这个和 OpenGL 的 **state machine 设计**有关，而且很多 PyOpenGL 代码都容易踩坑。
