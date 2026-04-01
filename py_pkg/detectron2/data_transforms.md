@@ -72,3 +72,25 @@ for t in transform.transforms:
 
 * `.all(axis=i)` means 取交按某个轴
 
+## 看不懂的高级用法-1
+这段代码利用了 **Detectron2 的变换系统扩展机制**，为 `HFlipTransform`（水平翻转变换）注册了一个专门处理 `rotated_boxes`（旋转框）类型数据的方法。
+
+### 1. 装饰器注册
+```python
+@T.HFlipTransform.register_type("rotated_boxes")
+def func(flip_transform: T.HFlipTransform, rotated_boxes: Any):
+    # 实现旋转框的翻转逻辑
+    return flipped_rotated_boxes
+```
+- `@T.HFlipTransform.register_type("rotated_boxes")` 将 `func` 注册为 `HFlipTransform` 类在处理数据类型名为 `"rotated_boxes"` 时的回调函数。
+- 注册后，当调用 `t.apply_rotated_boxes(rotated_boxes)` 时，Detectron2 内部会查找与 `"rotated_boxes"` 类型对应的处理函数，并自动调用该函数。
+
+### 2. 统一接口调用
+```python
+t = HFlipTransform(width=800)
+transformed_rotated_boxes = t.apply_rotated_boxes(rotated_boxes)
+```
+- `apply_rotated_boxes` 方法本身是一个通用接口，它根据传入数据的类型（通过字符串标识）分发到对应的已注册函数。
+- 如果没有为 `"rotated_boxes"` 注册处理函数，调用会抛出错误或使用默认行为。
+
+
