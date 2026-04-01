@@ -15,3 +15,4 @@ data: List[Dict] = DatasetCatalog.get("my_dataset")
 
 * detailed keys: https://detectron2.readthedocs.io/en/latest/tutorials/datasets.html#
 
+# 2. MetadataCatalog is used to record info related to specific dataset
