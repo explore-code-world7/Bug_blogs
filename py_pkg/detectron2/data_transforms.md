@@ -42,3 +42,33 @@ augs = MyCustomResize()
 transform = augs(input)
 ```
 
+## test flip
+```python
+# augs, input are defined as in previous examples
+transform = augs(input)  # type: T.Transform
+keypoints_xy = transform.apply_coords(keypoints_xy)   # transform the coordinates
+
+# get a list of all transforms that were applied
+transforms = T.TransformList([transform]).transforms
+# check if it is flipped for odd number of times
+do_hflip = sum(isinstance(t, T.HFlipTransform) for t in transforms) % 2 == 1
+if do_hflip:
+    keypoints_xy = keypoints_xy[flip_indices_mapping]
+```
+
+## test visibility
+
+```python
+transform = augs(input)  # type: T.TransformList
+assert isinstance(transform, T.TransformList)
+for t in transform.transforms:
+    keypoints_xy = t.apply_coords(keypoints_xy)
+    visibility &= (keypoints_xy >= [0, 0] & keypoints_xy <= [W, H]).all(axis=1)
+
+# btw, detectron2's `transform_keypoint_annotations` function chooses to label such keypoints "visible":
+# keypoints_xy = transform.apply_coords(keypoints_xy)
+# visibility &= (keypoints_xy >= [0, 0] & keypoints_xy <= [W, H]).all(axis=1)
+```
+
+* `.all(axis=i)` means 取交按某个轴
+
